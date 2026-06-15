@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import EmptyState from '../../../components/EmptyState.astro';
+import { LOCALES, isLocale, type Locale } from '../../../config';
+import { pagePath, mirrorAlternates, mirrorTranslations } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import { getCategories } from '../../../lib/content';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = (isLocale(Astro.params.locale) ? Astro.params.locale : 'ro') as Locale;
+const t = useTranslations(locale);
+const categories = await getCategories(locale);
+const title = t('nav.categories');
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={t('meta.categories')}
+  alternates={mirrorAlternates('categories')}
+  translations={mirrorTranslations('categories')}
+>
+  <section class="section">
+    <div class="container">
+      <Breadcrumbs locale={locale}
+        items={[{ label: t('common.home'), href: pagePath(locale) }, { label: title }]}
+      />
+      <h1>{title}</h1>
+      <div class="grid grid-3" style="margin-top:1.75rem">
+        {
+          categories.map((cat) => (
+            <a class="cat-card" href={pagePath(locale, 'categories', cat.id)}>
+              <h3>{cat.data.name[locale]}</h3>
+              {cat.data.description?.[locale] && <p>{cat.data.description[locale]}</p>}
+            </a>
+          ))
+        }
+      </div>
+      {categories.length === 0 && <EmptyState message={t('empty.categories')} />}
+    </div>
+  </section>
+</BaseLayout>

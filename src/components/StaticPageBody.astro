@@ -1,0 +1,37 @@
+---
+import type { StaticPageCopy } from '../data/site/pages';
+
+interface Props {
+  copy: StaticPageCopy;
+  lastUpdatedLabel?: string;
+}
+const { copy, lastUpdatedLabel } = Astro.props;
+---
+
+<article class="prose article-head">
+  <h1>{copy.title}</h1>
+  {
+    copy.lastUpdated && (
+      <p class="eyebrow">{lastUpdatedLabel ?? 'Last updated'}: {copy.lastUpdated}</p>
+    )
+  }
+  <p class="article-lead">{copy.intro}</p>
+
+  {
+    copy.sections.map((section) => (
+      <section>
+        {section.heading && <h2>{section.heading}</h2>}
+        {section.paragraphs?.map((p) => <p>{p}</p>)}
+        {section.list && (
+          <ul>
+            {section.list.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+    ))
+  }
+
+  <slot />
+</article>

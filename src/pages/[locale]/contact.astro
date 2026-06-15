@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import StaticPageBody from '../../components/StaticPageBody.astro';
+import { SITE, LOCALES, isLocale, type Locale } from '../../config';
+import { pagePath, mirrorAlternates, mirrorTranslations } from '../../i18n/utils';
+import { useTranslations } from '../../i18n/ui';
+import { staticPages } from '../../data/site/pages';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = (isLocale(Astro.params.locale) ? Astro.params.locale : 'ro') as Locale;
+const t = useTranslations(locale);
+const copy = staticPages.contact[locale];
+---
+
+<BaseLayout
+  locale={locale}
+  title={copy.title}
+  description={copy.intro}
+  alternates={mirrorAlternates('contact')}
+  translations={mirrorTranslations('contact')}
+>
+  <section class="section">
+    <div class="container container-narrow">
+      <Breadcrumbs locale={locale}
+        items={[{ label: t('common.home'), href: pagePath(locale) }, { label: copy.title }]}
+      />
+      <StaticPageBody copy={copy}>
+        <p style="margin-top:1.5rem">
+          <a class="btn btn-primary" href={`mailto:${SITE.contactEmail}`}>
+            {t('contact.emailLabel')}: {SITE.contactEmail}
+          </a>
+        </p>
+      </StaticPageBody>
+    </div>
+  </section>
+</BaseLayout>

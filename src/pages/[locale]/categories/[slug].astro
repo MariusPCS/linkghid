@@ -1,0 +1,169 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ContentCard from '../../../components/ContentCard.astro';
+import ProductCard from '../../../components/ProductCard.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import EmptyState from '../../../components/EmptyState.astro';
+import { LOCALES, type Locale } from '../../../config';
+import { pagePath, formatDate, otherLocales } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import {
+  entrySlug,
+  getReviews,
+  getComparisons,
+  getArticles,
+  getProducts,
+} from '../../../lib/content';
+
+export async function getStaticPaths() {
+  const categories = await getCollection('categories');
+  return categories.flatMap((entry) =>
+    entry.data.locales.map((locale) => ({
+      params: { locale, slug: entry.id },
+      props: { entry },
+    })),
+  );
+}
+
+const { entry } = Astro.props;
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const catId = entry.id;
+const name = entry.data.name[locale];
+const description = entry.data.description?.[locale];
+
+const [reviews, comparisons, articles, products] = await Promise.all([
+  getReviews(locale),
+  getComparisons(locale),
+  getArticles(locale),
+  getProducts(locale),
+]);
+
+const inCat = <T extends { data: { category?: { id: string } } }>(items: T[]) =>
+  items.filter((i) => i.data.category?.id === catId);
+
+const catReviews = inCat(reviews);
+const catComparisons = inCat(comparisons);
+const catArticles = inCat(articles);
+const catProducts = products.filter((p) => p.data.category.id === catId);
+const isEmpty =
+  catReviews.length + catComparisons.length + catArticles.length + catProducts.length === 0;
+
+// Translations / hreflang
+const selfUrl = pagePath(locale, 'categories', catId);
+const translations: Partial<Record<Locale, string>> = {};
+for (const l of LOCALES) {
+  translations[l] = entry.data.locales.includes(l)
+    ? pagePath(l, 'categories', catId)
+    : pagePath(l, 'categories');
+}
+const alternates = [
+  { hreflang: locale, href: selfUrl },
+  ...otherLocales(locale)
+    .filter((l) => entry.data.locales.includes(l))
+    .map((l) => ({ hreflang: l, href: pagePath(l, 'categories', catId) })),
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={name}
+  description={description ?? name}
+  alternates={alternates}
+  translations={translations}
+>
+  <section class="section">
+    <div class="container stack">
+      <Breadcrumbs locale={locale}
+        items={[
+          { label: t('common.home'), href: pagePath(locale) },
+          { label: t('nav.categories'), href: pagePath(locale, 'categories') },
+          { label: name },
+        ]}
+      />
+      <div>
+        <p class="kicker">{t('type.category')}</p>
+        <h1>{name}</h1>
+        {description && <p class="article-lead">{description}</p>}
+      </div>
+
+      {
+        catReviews.length > 0 && (
+          <section>
+            <SectionHeading title={t('nav.reviews')} />
+            <div class="grid grid-3">
+              {catReviews.map((r) => (
+                <ContentCard
+                  title={r.data.title}
+                  href={pagePath(locale, 'reviews', entrySlug(r))}
+                  description={r.data.description}
+                  typeLabel={t('type.review')}
+                  dateLabel={`${t('common.publishedOn')} ${formatDate(r.data.pubDate, locale)}`}
+                  rating={r.data.rating}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        catComparisons.length > 0 && (
+          <section>
+            <SectionHeading title={t('nav.comparisons')} />
+            <div class="grid grid-3">
+              {catComparisons.map((c) => (
+                <ContentCard
+                  title={c.data.title}
+                  href={pagePath(locale, 'comparisons', entrySlug(c))}
+                  description={c.data.description}
+                  typeLabel={t('type.comparison')}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        catArticles.length > 0 && (
+          <section>
+            <SectionHeading title={t('nav.articles')} />
+            <div class="grid grid-3">
+              {catArticles.map((a) => (
+                <ContentCard
+                  title={a.data.title}
+                  href={pagePath(locale, 'articles', entrySlug(a))}
+                  description={a.data.description}
+                  typeLabel={t('type.article')}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        catProducts.length > 0 && (
+          <section>
+            <SectionHeading title={t('nav.products')} />
+            <div class="grid grid-3">
+              {catProducts.map((p) => (
+                <ProductCard
+                  product={p}
+                  locale={locale}
+                  href={pagePath(locale, 'products', p.id)}
+                  categoryLabel={name}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {isEmpty && <EmptyState message={t('empty.generic')} />}
+    </div>
+  </section>
+</BaseLayout>

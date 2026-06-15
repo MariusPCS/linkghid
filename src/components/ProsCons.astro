@@ -1,0 +1,27 @@
+---
+import { type Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  pros: string[];
+  cons: string[];
+}
+const { locale, pros, cons } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<div class="proscons">
+  <div class="proscons__col proscons__pros">
+    <h3>{t('review.pros')}</h3>
+    <ul>
+      {pros.map((p) => <li>{p}</li>)}
+    </ul>
+  </div>
+  <div class="proscons__col proscons__cons">
+    <h3>{t('review.cons')}</h3>
+    <ul>
+      {cons.map((c) => <li>{c}</li>)}
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+---
+import Rating from './Rating.astro';
+
+interface Props {
+  title: string;
+  href: string;
+  description?: string;
+  typeLabel?: string;
+  dateLabel?: string;
+  categoryLabel?: string;
+  rating?: number;
+}
+const { title, href, description, typeLabel, dateLabel, categoryLabel, rating } = Astro.props;
+---
+
+<article class="card">
+  <div class="card-body">
+    <div class="card-meta">
+      {typeLabel && <span class="badge badge-accent">{typeLabel}</span>}
+      {categoryLabel && <span class="badge badge-muted">{categoryLabel}</span>}
+      {rating !== undefined && <Rating value={rating} />}
+    </div>
+    <h3 class="card-title"><a href={href}>{title}</a></h3>
+    {description && <p class="card-excerpt">{description}</p>}
+    {dateLabel && <p class="card-meta" style="margin-top:auto">{dateLabel}</p>}
+  </div>
+</article>

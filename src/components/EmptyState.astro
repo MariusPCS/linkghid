@@ -1,0 +1,16 @@
+---
+interface Props {
+  message: string;
+}
+const { message } = Astro.props;
+---
+
+<div class="empty-state">
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"></path>
+    <path d="M3 7h18l-1.5 12.2a2 2 0 0 1-2 1.8H6.5a2 2 0 0 1-2-1.8L3 7Z"></path>
+    <line x1="9" y1="12" x2="15" y2="12"></line>
+  </svg>
+  <p>{message}</p>
+</div>

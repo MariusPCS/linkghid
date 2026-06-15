@@ -1,0 +1,151 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import { SITE, LOCALES, isLocale, type Locale } from '../../config';
+import { pagePath, formatDate, mirrorAlternates, mirrorTranslations } from '../../i18n/utils';
+import { useTranslations } from '../../i18n/ui';
+import { getReviews, getComparisons, getArticles, getCategories, entrySlug } from '../../lib/content';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = (isLocale(Astro.params.locale) ? Astro.params.locale : 'ro') as Locale;
+const t = useTranslations(locale);
+
+const [reviews, comparisons, articles, categories] = await Promise.all([
+  getReviews(locale),
+  getComparisons(locale),
+  getArticles(locale),
+  getCategories(locale),
+]);
+
+const hasAnyContent =
+  reviews.length + comparisons.length + articles.length + categories.length > 0;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  url: new URL(pagePath(locale), Astro.site).href,
+  inLanguage: locale,
+  description: SITE.description[locale],
+};
+---
+
+<BaseLayout
+  locale={locale}
+  title={`${SITE.name} — ${SITE.tagline[locale]}`}
+  description={SITE.description[locale]}
+  alternates={mirrorAlternates()}
+  translations={mirrorTranslations()}
+  jsonLd={jsonLd}
+>
+  <section class="hero">
+    <div class="container hero__inner">
+      <p class="kicker">{t('home.heroKicker')}</p>
+      <h1>{SITE.tagline[locale]}</h1>
+      <p class="lead">{SITE.description[locale]}</p>
+      <div class="hero__actions">
+        <a class="btn btn-primary" href={pagePath(locale, 'reviews')}>{t('nav.reviews')}</a>
+        <a class="btn btn-ghost" href={pagePath(locale, 'comparisons')}>{t('nav.comparisons')}</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container section stack">
+    {
+      reviews.length > 0 && (
+        <section>
+          <SectionHeading
+            title={t('home.latestReviews')}
+            viewAllHref={pagePath(locale, 'reviews')}
+            viewAllLabel={t('common.viewAll')}
+          />
+          <div class="grid grid-3">
+            {reviews.slice(0, 6).map((entry) => (
+              <ContentCard
+                title={entry.data.title}
+                href={pagePath(locale, 'reviews', entrySlug(entry))}
+                description={entry.data.description}
+                typeLabel={t('type.review')}
+                dateLabel={`${t('common.publishedOn')} ${formatDate(entry.data.pubDate, locale)}`}
+                rating={entry.data.rating}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      comparisons.length > 0 && (
+        <section>
+          <SectionHeading
+            title={t('home.latestComparisons')}
+            viewAllHref={pagePath(locale, 'comparisons')}
+            viewAllLabel={t('common.viewAll')}
+          />
+          <div class="grid grid-3">
+            {comparisons.slice(0, 6).map((entry) => (
+              <ContentCard
+                title={entry.data.title}
+                href={pagePath(locale, 'comparisons', entrySlug(entry))}
+                description={entry.data.description}
+                typeLabel={t('type.comparison')}
+                dateLabel={`${t('common.publishedOn')} ${formatDate(entry.data.pubDate, locale)}`}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      articles.length > 0 && (
+        <section>
+          <SectionHeading
+            title={t('home.latestArticles')}
+            viewAllHref={pagePath(locale, 'articles')}
+            viewAllLabel={t('common.viewAll')}
+          />
+          <div class="grid grid-3">
+            {articles.slice(0, 6).map((entry) => (
+              <ContentCard
+                title={entry.data.title}
+                href={pagePath(locale, 'articles', entrySlug(entry))}
+                description={entry.data.description}
+                typeLabel={t('type.article')}
+                dateLabel={`${t('common.publishedOn')} ${formatDate(entry.data.pubDate, locale)}`}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      categories.length > 0 && (
+        <section>
+          <SectionHeading
+            title={t('home.browseCategories')}
+            viewAllHref={pagePath(locale, 'categories')}
+            viewAllLabel={t('common.viewAll')}
+          />
+          <div class="grid grid-3">
+            {categories.map((cat) => (
+              <a class="cat-card" href={pagePath(locale, 'categories', cat.id)}>
+                <h3>{cat.data.name[locale]}</h3>
+                {cat.data.description?.[locale] && <p>{cat.data.description[locale]}</p>}
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {!hasAnyContent && <EmptyState message={t('empty.generic')} />}
+  </div>
+</BaseLayout>

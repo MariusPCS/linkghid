@@ -1,0 +1,27 @@
+---
+import { DEFAULT_LOCALE, SITE } from '../config';
+import { pagePath } from '../i18n/utils';
+
+// Root of the site redirects to the default locale home (static-safe).
+const target = pagePath(DEFAULT_LOCALE);
+---
+
+<!doctype html>
+<html lang={DEFAULT_LOCALE}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={target} />
+    <meta name="robots" content="noindex, follow" />
+    <title>{SITE.name}</title>
+  </head>
+  <body>
+    <p>
+      Redirecting to <a href={target}>{SITE.name}</a>…
+    </p>
+    <script is:inline define:vars={{ target }}>
+      window.location.replace(target);
+    </script>
+  </body>
+</html>

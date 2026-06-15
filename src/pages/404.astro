@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { DEFAULT_LOCALE } from '../config';
+import { pagePath } from '../i18n/utils';
+import { useTranslations } from '../i18n/ui';
+
+// GitHub Pages serves this as the site-wide 404. Default to the primary locale.
+const locale = DEFAULT_LOCALE;
+const t = useTranslations(locale);
+---
+
+<BaseLayout
+  locale={locale}
+  title={t('404.title')}
+  description={t('404.message')}
+  noindex={true}
+>
+  <section class="section">
+    <div class="container error-page">
+      <p class="code">404</p>
+      <h1>{t('404.title')}</h1>
+      <p class="muted">{t('404.message')}</p>
+      <p style="margin-top:1.5rem">
+        <a class="btn btn-primary" href={pagePath(locale)}>{t('404.cta')}</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>

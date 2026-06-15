@@ -1,0 +1,30 @@
+---
+import { DEFAULT_LOCALE, type Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+interface Props {
+  items: Crumb[];
+  locale?: Locale;
+}
+const { items, locale = DEFAULT_LOCALE } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<nav class="breadcrumbs" aria-label={t('nav.breadcrumb')}>
+  {
+    items.map((item, i) => (
+      <>
+        {i > 0 && <span class="sep" aria-hidden="true">/</span>}
+        {item.href && i < items.length - 1 ? (
+          <a href={item.href}>{item.label}</a>
+        ) : (
+          <span aria-current={i === items.length - 1 ? 'page' : undefined}>{item.label}</span>
+        )}
+      </>
+    ))
+  }
+</nav>

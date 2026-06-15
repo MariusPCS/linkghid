@@ -1,0 +1,35 @@
+---
+import { LOCALES, type Locale } from '../config';
+import { swapLocale } from '../i18n/utils';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  /** Optional explicit per-locale URLs (e.g. translated content). */
+  translations?: Partial<Record<Locale, string>>;
+}
+
+const { locale, translations } = Astro.props;
+const t = useTranslations(locale);
+
+function hrefFor(target: Locale): string {
+  if (translations?.[target]) return translations[target]!;
+  return swapLocale(Astro.url.pathname, target);
+}
+---
+
+<nav class="lang-switch" aria-label={t('lang.switch')}>
+  {
+    LOCALES.map((loc) =>
+      loc === locale ? (
+        <span aria-current="true" lang={loc}>
+          {loc}
+        </span>
+      ) : (
+        <a href={hrefFor(loc)} lang={loc} hreflang={loc} rel="alternate">
+          {loc}
+        </a>
+      ),
+    )
+  }
+</nav>

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import StaticPageBody from '../../components/StaticPageBody.astro';
+import { LOCALES, isLocale, type Locale } from '../../config';
+import { pagePath, mirrorAlternates, mirrorTranslations } from '../../i18n/utils';
+import { useTranslations } from '../../i18n/ui';
+import { staticPages } from '../../data/site/pages';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = (isLocale(Astro.params.locale) ? Astro.params.locale : 'ro') as Locale;
+const t = useTranslations(locale);
+const copy = staticPages.privacy[locale];
+const updatedLabel = locale === 'ro' ? 'Ultima actualizare' : 'Last updated';
+---
+
+<BaseLayout
+  locale={locale}
+  title={copy.title}
+  description={copy.intro}
+  alternates={mirrorAlternates('privacy')}
+  translations={mirrorTranslations('privacy')}
+>
+  <section class="section">
+    <div class="container container-narrow">
+      <Breadcrumbs locale={locale}
+        items={[{ label: t('common.home'), href: pagePath(locale) }, { label: copy.title }]}
+      />
+      <StaticPageBody copy={copy} lastUpdatedLabel={updatedLabel} />
+    </div>
+  </section>
+</BaseLayout>

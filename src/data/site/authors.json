@@ -1,0 +1,13 @@
+{
+  "linkghid": {
+    "name": "LinkGhid",
+    "role": {
+      "ro": "Redacția LinkGhid",
+      "en": "LinkGhid Editorial"
+    },
+    "bio": {
+      "ro": "Echipa editorială LinkGhid scrie recenzii și comparații practice, testează informațiile disponibile public și marchează transparent linkurile afiliate.",
+      "en": "The LinkGhid editorial team writes practical reviews and comparisons, checks publicly available information, and clearly marks affiliate links."
+    }
+  }
+}

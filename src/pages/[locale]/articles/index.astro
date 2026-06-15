@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ContentCard from '../../../components/ContentCard.astro';
+import EmptyState from '../../../components/EmptyState.astro';
+import { LOCALES, isLocale, type Locale } from '../../../config';
+import { pagePath, formatDate, mirrorAlternates, mirrorTranslations } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import { getArticles, entrySlug } from '../../../lib/content';
+
+export function getStaticPaths() {
+  return LOCALES.map((locale) => ({ params: { locale } }));
+}
+
+const locale = (isLocale(Astro.params.locale) ? Astro.params.locale : 'ro') as Locale;
+const t = useTranslations(locale);
+const articles = await getArticles(locale);
+const title = t('nav.articles');
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={t('meta.articles')}
+  alternates={mirrorAlternates('articles')}
+  translations={mirrorTranslations('articles')}
+>
+  <section class="section">
+    <div class="container">
+      <Breadcrumbs locale={locale}
+        items={[{ label: t('common.home'), href: pagePath(locale) }, { label: title }]}
+      />
+      <h1>{title}</h1>
+      <div class="grid grid-3" style="margin-top:1.75rem">
+        {
+          articles.map((entry) => (
+            <ContentCard
+              title={entry.data.title}
+              href={pagePath(locale, 'articles', entrySlug(entry))}
+              description={entry.data.description}
+              typeLabel={t('type.article')}
+              dateLabel={`${t('common.publishedOn')} ${formatDate(entry.data.pubDate, locale)}`}
+            />
+          ))
+        }
+      </div>
+      {articles.length === 0 && <EmptyState message={t('empty.articles')} />}
+    </div>
+  </section>
+</BaseLayout>

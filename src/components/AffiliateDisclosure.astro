@@ -1,0 +1,23 @@
+---
+import { type Locale } from '../config';
+import { disclosures } from '../data/site/disclosures';
+
+interface Props {
+  locale: Locale;
+  /** 'block' = standalone row; 'inline' = compact (default). */
+  variant?: 'inline' | 'block';
+}
+
+const { locale, variant = 'inline' } = Astro.props;
+const text = disclosures[locale].inline;
+---
+
+<p class={`disclosure-inline ${variant === 'block' ? 'disclosure-row' : ''}`}>
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="16" x2="12" y2="12"></line>
+    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+  </svg>
+  <span>{text}</span>
+</p>

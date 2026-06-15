@@ -1,0 +1,67 @@
+---
+import { type Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+
+export interface CompareRow {
+  name: string;
+  brand: string;
+  categoryLabel?: string;
+  priceText?: string;
+  /** Internal link to the product page. */
+  productHref: string;
+  /** Resolved affiliate URL (already gated). When absent, no deal CTA renders. */
+  affiliateUrl?: string;
+}
+
+interface Props {
+  locale: Locale;
+  rows: CompareRow[];
+}
+const { locale, rows } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<div class="compare-wrap">
+  <table class="compare">
+    <thead>
+      <tr>
+        <th scope="col">{t('comparison.product')}</th>
+        <th scope="col">{t('comparison.brand')}</th>
+        <th scope="col">{t('comparison.category')}</th>
+        <th scope="col">{t('comparison.price')}</th>
+        <th scope="col">{t('comparison.action')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((row) => (
+          <tr>
+            <td>
+              <a class="product-name" href={row.productHref}>
+                {row.name}
+              </a>
+            </td>
+            <td class="product-brand">{row.brand}</td>
+            <td>{row.categoryLabel ?? '—'}</td>
+            <td>{row.priceText ?? '—'}</td>
+            <td>
+              {row.affiliateUrl ? (
+                <a
+                  class="btn btn-primary"
+                  style="padding:0.5rem 0.9rem;font-size:0.85rem"
+                  href={row.affiliateUrl}
+                  target="_blank"
+                  rel="sponsored nofollow noopener"
+                >
+                  {t('cta.viewOffer')}
+                </a>
+              ) : (
+                <span class="muted">—</span>
+              )}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

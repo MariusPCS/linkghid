@@ -1,0 +1,28 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { type Locale } from '../config';
+import { localized } from '../lib/content';
+
+interface Props {
+  product: CollectionEntry<'products'>;
+  locale: Locale;
+  href: string;
+  categoryLabel?: string;
+}
+const { product, locale, href, categoryLabel } = Astro.props;
+const { name, brand, summary, price } = product.data;
+const summaryText = localized(summary, locale);
+const priceText = price ? `${price.amount} ${price.currency}` : undefined;
+---
+
+<article class="card">
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="badge badge-muted">{brand}</span>
+      {categoryLabel && <span class="badge badge-muted">{categoryLabel}</span>}
+    </div>
+    <h3 class="card-title"><a href={href}>{name}</a></h3>
+    {summaryText && <p class="card-excerpt">{summaryText}</p>}
+    {priceText && <p class="card-meta" style="margin-top:auto">{priceText}</p>}
+  </div>
+</article>

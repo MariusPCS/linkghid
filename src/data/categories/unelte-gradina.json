@@ -1,0 +1,10 @@
+{
+  "name": { "ro": "Unelte & Grădină", "en": "Tools & Garden" },
+  "description": {
+    "ro": "Ghiduri și recomandări pentru scule, unelte de grădină și echipamente de exterior.",
+    "en": "Guides and recommendations for tools, garden equipment and outdoor power tools."
+  },
+  "locales": ["ro", "en"],
+  "featured": true,
+  "order": 20
+}

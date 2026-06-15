@@ -1,0 +1,68 @@
+---
+import { SITE, type Locale } from '../config';
+import { pagePath } from '../i18n/utils';
+import { useTranslations } from '../i18n/ui';
+import { footerSections, footerLegal } from '../data/site/navigation';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href={pagePath(locale)} aria-label={SITE.name}>
+          <svg class="brand__mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+            <rect width="40" height="40" rx="9" fill="#1f5c4d"></rect>
+            <path
+              d="M13 11.5v17M13 28.5h9.5M24 28.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0-5.7 9.6"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
+          <span>{SITE.name}</span>
+        </a>
+        <p>{t('footer.tagline')}</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>{t('footer.sections')}</h4>
+        <ul>
+          {
+            footerSections.map((item) => (
+              <li>
+                <a href={pagePath(locale, item.segment)}>{t(item.labelKey)}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>{t('footer.legal')}</h4>
+        <ul>
+          {
+            footerLegal.map((item) => (
+              <li>
+                <a href={pagePath(locale, item.segment)}>{t(item.labelKey)}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-disclosure">{t('footer.disclosureNote')}</p>
+      <p>© {year} {SITE.name}. {t('footer.rights')}</p>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,19 @@
+---
+interface Props {
+  title: string;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+}
+const { title, viewAllHref, viewAllLabel } = Astro.props;
+---
+
+<div class="section-head">
+  <h2>{title}</h2>
+  {
+    viewAllHref && viewAllLabel && (
+      <a class="link-all" href={viewAllHref}>
+        {viewAllLabel} →
+      </a>
+    )
+  }
+</div>

@@ -1,0 +1,196 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import AffiliateCTA from '../../../components/AffiliateCTA.astro';
+import ContentCard from '../../../components/ContentCard.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { LOCALES, type Locale } from '../../../config';
+import { pagePath, formatDate, otherLocales } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import {
+  entrySlug,
+  resolveCategory,
+  resolveMerchant,
+  getReviewsForProduct,
+  getComparisonsForProduct,
+  localized,
+} from '../../../lib/content';
+import { resolveAffiliate } from '../../../lib/affiliate';
+
+export async function getStaticPaths() {
+  const products = await getCollection('products', ({ data }) => data.status !== 'deprecated');
+  return products.flatMap((entry) =>
+    entry.data.locales.map((locale) => ({
+      params: { locale, slug: entry.id },
+      props: { entry },
+    })),
+  );
+}
+
+const { entry } = Astro.props;
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+
+const category = await resolveCategory(entry.data.category);
+const merchant = await resolveMerchant(entry.data.merchant);
+const [relatedReviews, relatedComparisons] = await Promise.all([
+  getReviewsForProduct(entry.id, locale),
+  getComparisonsForProduct(entry.id, locale),
+]);
+
+const summaryText = localized(entry.data.summary, locale);
+const priceText = entry.data.price
+  ? `${entry.data.price.amount} ${entry.data.price.currency}`
+  : undefined;
+const resolved = resolveAffiliate(entry.data);
+
+// Translations / hreflang — product exists in each of its relevant locales.
+const selfUrl = pagePath(locale, 'products', entry.id);
+const translations: Partial<Record<Locale, string>> = {};
+for (const l of LOCALES) {
+  translations[l] = entry.data.locales.includes(l)
+    ? pagePath(l, 'products', entry.id)
+    : pagePath(l, 'products');
+}
+const alternates = [
+  { hreflang: locale, href: selfUrl },
+  ...otherLocales(locale)
+    .filter((l) => entry.data.locales.includes(l))
+    .map((l) => ({ hreflang: l, href: pagePath(l, 'products', entry.id) })),
+];
+
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: entry.data.name,
+  brand: { '@type': 'Brand', name: entry.data.brand },
+  ...(summaryText && { description: summaryText }),
+  ...(entry.data.price && {
+    offers: {
+      '@type': 'Offer',
+      price: entry.data.price.amount,
+      priceCurrency: entry.data.price.currency,
+      ...(resolved?.url || entry.data.destinationUrl
+        ? { url: resolved?.url ?? entry.data.destinationUrl }
+        : {}),
+    },
+  }),
+};
+const description = summaryText ?? `${entry.data.name} — ${entry.data.brand}`;
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.name}
+  description={description}
+  ogImage={entry.data.image}
+  alternates={alternates}
+  translations={translations}
+  jsonLd={jsonLd}
+>
+  <section class="section">
+    <div class="container">
+      <Breadcrumbs locale={locale}
+        items={[
+          { label: t('common.home'), href: pagePath(locale) },
+          { label: t('nav.products'), href: pagePath(locale, 'products') },
+          { label: entry.data.name },
+        ]}
+      />
+
+      <div class="article-head">
+        <p class="kicker">{t('type.product')}</p>
+        <h1>{entry.data.name}</h1>
+        {summaryText && <p class="article-lead">{summaryText}</p>}
+      </div>
+
+      {
+        entry.data.status === 'needs_review' && (
+          <p class="notice notice-warn">{t('product.statusNeedsReview')}</p>
+        )
+      }
+
+      <table class="specs">
+        <tbody>
+          <tr><th scope="row">{t('product.brand')}</th><td>{entry.data.brand}</td></tr>
+          {
+            category && (
+              <tr>
+                <th scope="row">{t('product.category')}</th>
+                <td><a href={pagePath(locale, 'categories', category.id)}>{category.data.name[locale]}</a></td>
+              </tr>
+            )
+          }
+          {
+            merchant && (
+              <tr><th scope="row">{t('product.merchant')}</th><td>{merchant.data.name}</td></tr>
+            )
+          }
+          {priceText && <tr><th scope="row">{t('product.price')}</th><td>{priceText}</td></tr>}
+          {
+            entry.data.lastChecked && (
+              <tr>
+                <th scope="row">{t('product.lastChecked')}</th>
+                <td>{formatDate(entry.data.lastChecked, locale)}</td>
+              </tr>
+            )
+          }
+        </tbody>
+      </table>
+
+      <AffiliateCTA
+        locale={locale}
+        product={entry}
+        subtitle={merchant ? `${entry.data.name} · ${merchant.data.name}` : entry.data.name}
+      />
+
+      {
+        !resolved && entry.data.destinationUrl && (
+          <p class="notice">
+            <a href={entry.data.destinationUrl} target="_blank" rel="nofollow noopener">
+              {t('product.source')} ↗
+            </a>
+          </p>
+        )
+      }
+
+      {
+        relatedReviews.length > 0 && (
+          <div style="margin-top:2.5rem">
+            <SectionHeading title={t('common.relatedReviews')} />
+            <div class="grid grid-3">
+              {relatedReviews.map((r) => (
+                <ContentCard
+                  title={r.data.title}
+                  href={pagePath(locale, 'reviews', entrySlug(r))}
+                  description={r.data.description}
+                  typeLabel={t('type.review')}
+                  rating={r.data.rating}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {
+        relatedComparisons.length > 0 && (
+          <div style="margin-top:2rem">
+            <SectionHeading title={t('common.relatedComparisons')} />
+            <div class="grid grid-3">
+              {relatedComparisons.map((c) => (
+                <ContentCard
+                  title={c.data.title}
+                  href={pagePath(locale, 'comparisons', entrySlug(c))}
+                  description={c.data.description}
+                  typeLabel={t('type.comparison')}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

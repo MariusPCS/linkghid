@@ -1,0 +1,50 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { type Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+import { resolveAffiliate, type AffiliateOverride } from '../lib/affiliate';
+import AffiliateDisclosure from './AffiliateDisclosure.astro';
+
+interface Props {
+  locale: Locale;
+  product?: CollectionEntry<'products'>;
+  override?: AffiliateOverride;
+  /** CTA button text. Defaults to the localized "View offer". */
+  label?: string;
+  /** Heading above the button. Defaults to the localized "Ready to buy?". */
+  heading?: string;
+  /** Optional subtitle line (e.g. product name + merchant). */
+  subtitle?: string;
+}
+
+const { locale, product, override, label, heading, subtitle } = Astro.props;
+const t = useTranslations(locale);
+
+// Single gate: no valid affiliate link -> render NOTHING (no placeholder CTA).
+const resolved = resolveAffiliate(product?.data, override);
+const ctaLabel = label ?? t('cta.viewOffer');
+const ctaHeading = heading ?? t('cta.heading');
+---
+
+{
+  resolved && (
+    <aside class="cta-box" aria-label={t('disclosure.label')}>
+      <h3>{ctaHeading}</h3>
+      {subtitle && <p class="cta-sub">{subtitle}</p>}
+      <a
+        class="btn btn-primary"
+        href={resolved.url}
+        target="_blank"
+        rel="sponsored nofollow noopener"
+      >
+        {ctaLabel}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="7" y1="17" x2="17" y2="7"></line>
+          <polyline points="7 7 17 7 17 17"></polyline>
+        </svg>
+      </a>
+      <AffiliateDisclosure locale={locale} />
+    </aside>
+  )
+}

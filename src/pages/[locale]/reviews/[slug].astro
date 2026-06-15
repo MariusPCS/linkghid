@@ -1,0 +1,193 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ProsCons from '../../../components/ProsCons.astro';
+import Rating from '../../../components/Rating.astro';
+import AffiliateCTA from '../../../components/AffiliateCTA.astro';
+import ContentCard from '../../../components/ContentCard.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { LOCALES, type Locale } from '../../../config';
+import { pagePath, formatDate, otherLocales } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import {
+  entrySlug,
+  resolveProduct,
+  resolveCategory,
+  resolveMerchant,
+  getComparisonsForProduct,
+  getTranslationSlugs,
+} from '../../../lib/content';
+import { authorRole } from '../../../data/site/authors';
+
+export async function getStaticPaths() {
+  const reviews = await getCollection('reviews', ({ data }) => data.draft !== true);
+  return reviews.map((entry) => ({
+    params: { locale: entry.data.locale, slug: entrySlug(entry) },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const locale = entry.data.locale as Locale;
+const t = useTranslations(locale);
+const slug = entrySlug(entry);
+
+const { Content } = await render(entry);
+
+const product = await resolveProduct(entry.data.product);
+const category = await resolveCategory(entry.data.category);
+const merchant = product ? await resolveMerchant(product.data.merchant) : undefined;
+const relatedComparisons = product
+  ? await getComparisonsForProduct(product.id, locale)
+  : [];
+
+const ctaSubtitle = product
+  ? `${product.data.name}${merchant ? ` · ${merchant.data.name}` : ''}`
+  : undefined;
+
+// Translations / hreflang
+const slugs = await getTranslationSlugs('reviews', entry.data.translationKey);
+const selfUrl = pagePath(locale, 'reviews', slug);
+const translations: Partial<Record<Locale, string>> = {};
+for (const l of LOCALES) {
+  translations[l] =
+    l === locale ? selfUrl : slugs[l] ? pagePath(l, 'reviews', slugs[l]!) : pagePath(l, 'reviews');
+}
+const alternates = [
+  { hreflang: locale, href: selfUrl },
+  ...otherLocales(locale)
+    .filter((l) => slugs[l])
+    .map((l) => ({ hreflang: l, href: pagePath(l, 'reviews', slugs[l]!) })),
+];
+
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Review',
+  headline: entry.data.title,
+  inLanguage: locale,
+  datePublished: entry.data.pubDate.toISOString(),
+  ...(entry.data.updatedDate && { dateModified: entry.data.updatedDate.toISOString() }),
+  author: { '@type': 'Organization', name: 'LinkGhid' },
+  ...(product && {
+    itemReviewed: { '@type': 'Product', name: product.data.name, brand: product.data.brand },
+  }),
+  ...(entry.data.rating !== undefined && {
+    reviewRating: { '@type': 'Rating', ratingValue: entry.data.rating, bestRating: 5 },
+  }),
+};
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  ogType="article"
+  ogImage={entry.data.heroImage}
+  alternates={alternates}
+  translations={translations}
+  jsonLd={jsonLd}
+>
+  <section class="section">
+    <div class="container">
+      <Breadcrumbs locale={locale}
+        items={[
+          { label: t('common.home'), href: pagePath(locale) },
+          { label: t('nav.reviews'), href: pagePath(locale, 'reviews') },
+          { label: entry.data.title },
+        ]}
+      />
+
+      <div class="article-head">
+        <p class="kicker">{t('type.review')}</p>
+        <h1>{entry.data.title}</h1>
+        <p class="article-lead">{entry.data.description}</p>
+        <div class="article-meta">
+          <span>{authorRole(entry.data.author, locale)}</span>
+          <span>·</span>
+          <span>{t('common.publishedOn')} {formatDate(entry.data.pubDate, locale)}</span>
+          {
+            category && (
+              <>
+                <span>·</span>
+                <a href={pagePath(locale, 'categories', category.id)}>
+                  {category.data.name[locale]}
+                </a>
+              </>
+            )
+          }
+          {entry.data.rating !== undefined && (
+            <span style="margin-left:auto"><Rating value={entry.data.rating} label={t('review.rating')} /></span>
+          )}
+        </div>
+      </div>
+
+      <div class="verdict">
+        <h2>{t('review.verdict')}</h2>
+        <p style="margin:0">{entry.data.verdict}</p>
+      </div>
+
+      <ProsCons locale={locale} pros={entry.data.pros} cons={entry.data.cons} />
+
+      <div class="proscons">
+        <div class="proscons__col">
+          <h3>{t('review.bestFor')}</h3>
+          <ul>{entry.data.bestFor.map((b) => <li>{b}</li>)}</ul>
+        </div>
+        <div class="proscons__col">
+          <h3>{t('review.notIdealFor')}</h3>
+          <ul>{entry.data.notIdealFor.map((b) => <li>{b}</li>)}</ul>
+        </div>
+      </div>
+
+      {
+        entry.data.keyFeatures.length > 0 && (
+          <table class="specs">
+            <caption class="kicker" style="text-align:left">{t('review.keyFeatures')}</caption>
+            <tbody>
+              {entry.data.keyFeatures.map((f) => (
+                <tr>
+                  <th scope="row">{f.label}</th>
+                  <td>{f.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      }
+
+      <AffiliateCTA
+        locale={locale}
+        product={product}
+        override={{
+          affiliateOverrideUrl: entry.data.affiliateOverrideUrl,
+          affiliateOverrideReason: entry.data.affiliateOverrideReason,
+        }}
+        label={entry.data.ctaLabel}
+        subtitle={ctaSubtitle}
+      />
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {
+        relatedComparisons.length > 0 && (
+          <div style="margin-top:2.5rem">
+            <SectionHeading title={t('common.relatedComparisons')} />
+            <div class="grid grid-3">
+              {relatedComparisons.map((c) => (
+                <ContentCard
+                  title={c.data.title}
+                  href={pagePath(locale, 'comparisons', entrySlug(c))}
+                  description={c.data.description}
+                  typeLabel={t('type.comparison')}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

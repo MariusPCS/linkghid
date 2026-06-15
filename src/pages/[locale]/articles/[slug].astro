@@ -1,0 +1,129 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ProductCard from '../../../components/ProductCard.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { LOCALES, type Locale } from '../../../config';
+import { pagePath, formatDate, otherLocales } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import {
+  entrySlug,
+  resolveProducts,
+  resolveCategory,
+  getTranslationSlugs,
+} from '../../../lib/content';
+import { authorRole } from '../../../data/site/authors';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles', ({ data }) => data.draft !== true);
+  return articles.map((entry) => ({
+    params: { locale: entry.data.locale, slug: entrySlug(entry) },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const locale = entry.data.locale as Locale;
+const t = useTranslations(locale);
+const slug = entrySlug(entry);
+
+const { Content } = await render(entry);
+const category = await resolveCategory(entry.data.category);
+const relatedProducts = await resolveProducts(entry.data.products);
+const relatedCategories = await Promise.all(
+  relatedProducts.map((p) => resolveCategory(p.data.category)),
+);
+
+// Translations / hreflang
+const slugs = await getTranslationSlugs('articles', entry.data.translationKey);
+const selfUrl = pagePath(locale, 'articles', slug);
+const translations: Partial<Record<Locale, string>> = {};
+for (const l of LOCALES) {
+  translations[l] =
+    l === locale ? selfUrl : slugs[l] ? pagePath(l, 'articles', slugs[l]!) : pagePath(l, 'articles');
+}
+const alternates = [
+  { hreflang: locale, href: selfUrl },
+  ...otherLocales(locale)
+    .filter((l) => slugs[l])
+    .map((l) => ({ hreflang: l, href: pagePath(l, 'articles', slugs[l]!) })),
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: entry.data.title,
+  description: entry.data.description,
+  inLanguage: locale,
+  datePublished: entry.data.pubDate.toISOString(),
+  ...(entry.data.updatedDate && { dateModified: entry.data.updatedDate.toISOString() }),
+  author: { '@type': 'Organization', name: 'LinkGhid' },
+};
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  ogType="article"
+  ogImage={entry.data.heroImage}
+  alternates={alternates}
+  translations={translations}
+  jsonLd={jsonLd}
+>
+  <section class="section">
+    <div class="container">
+      <Breadcrumbs locale={locale}
+        items={[
+          { label: t('common.home'), href: pagePath(locale) },
+          { label: t('nav.articles'), href: pagePath(locale, 'articles') },
+          { label: entry.data.title },
+        ]}
+      />
+
+      <div class="article-head">
+        <p class="kicker">{t('type.article')}</p>
+        <h1>{entry.data.title}</h1>
+        <p class="article-lead">{entry.data.description}</p>
+        <div class="article-meta">
+          <span>{authorRole(entry.data.author, locale)}</span>
+          <span>·</span>
+          <span>{t('common.publishedOn')} {formatDate(entry.data.pubDate, locale)}</span>
+          {
+            category && (
+              <>
+                <span>·</span>
+                <a href={pagePath(locale, 'categories', category.id)}>
+                  {category.data.name[locale]}
+                </a>
+              </>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {
+        relatedProducts.length > 0 && (
+          <div style="margin-top:2.5rem">
+            <SectionHeading title={t('nav.products')} />
+            <div class="grid grid-3">
+              {relatedProducts.map((product, i) => (
+                <ProductCard
+                  product={product}
+                  locale={locale}
+                  href={pagePath(locale, 'products', product.id)}
+                  categoryLabel={relatedCategories[i]?.data.name[locale]}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

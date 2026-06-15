@@ -1,0 +1,204 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ComparisonTable, { type CompareRow } from '../../../components/ComparisonTable.astro';
+import AffiliateDisclosure from '../../../components/AffiliateDisclosure.astro';
+import AffiliateCTA from '../../../components/AffiliateCTA.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { LOCALES, type Locale } from '../../../config';
+import { pagePath, formatDate, otherLocales } from '../../../i18n/utils';
+import { useTranslations } from '../../../i18n/ui';
+import {
+  entrySlug,
+  resolveProducts,
+  resolveProduct,
+  resolveCategory,
+  getTranslationSlugs,
+} from '../../../lib/content';
+import { resolveAffiliate } from '../../../lib/affiliate';
+import { authorRole } from '../../../data/site/authors';
+
+export async function getStaticPaths() {
+  const comparisons = await getCollection('comparisons', ({ data }) => data.draft !== true);
+  return comparisons.map((entry) => ({
+    params: { locale: entry.data.locale, slug: entrySlug(entry) },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const locale = entry.data.locale as Locale;
+const t = useTranslations(locale);
+const slug = entrySlug(entry);
+const override = {
+  affiliateOverrideUrl: entry.data.affiliateOverrideUrl,
+  affiliateOverrideReason: entry.data.affiliateOverrideReason,
+};
+
+const { Content } = await render(entry);
+const products = await resolveProducts(entry.data.products);
+
+// Build comparison rows (affiliate links are gated per product).
+const rows: CompareRow[] = await Promise.all(
+  products.map(async (product) => {
+    const category = await resolveCategory(product.data.category);
+    const resolved = resolveAffiliate(product.data, override);
+    return {
+      name: product.data.name,
+      brand: product.data.brand,
+      categoryLabel: category?.data.name[locale],
+      priceText: product.data.price
+        ? `${product.data.price.amount} ${product.data.price.currency}`
+        : undefined,
+      productHref: pagePath(locale, 'products', product.id),
+      affiliateUrl: resolved?.url,
+    } satisfies CompareRow;
+  }),
+);
+const anyAffiliate = rows.some((r) => r.affiliateUrl);
+
+// Resolve "best for" picks to product entries.
+const picks = await Promise.all(
+  entry.data.picks.map(async (pick) => ({
+    label: pick.label,
+    product: await resolveProduct(pick.product),
+  })),
+);
+
+// Translations / hreflang
+const slugs = await getTranslationSlugs('comparisons', entry.data.translationKey);
+const selfUrl = pagePath(locale, 'comparisons', slug);
+const translations: Partial<Record<Locale, string>> = {};
+for (const l of LOCALES) {
+  translations[l] =
+    l === locale
+      ? selfUrl
+      : slugs[l]
+        ? pagePath(l, 'comparisons', slugs[l]!)
+        : pagePath(l, 'comparisons');
+}
+const alternates = [
+  { hreflang: locale, href: selfUrl },
+  ...otherLocales(locale)
+    .filter((l) => slugs[l])
+    .map((l) => ({ hreflang: l, href: pagePath(l, 'comparisons', slugs[l]!) })),
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: entry.data.title,
+  inLanguage: locale,
+  datePublished: entry.data.pubDate.toISOString(),
+  author: { '@type': 'Organization', name: 'LinkGhid' },
+  about: products.map((p) => ({ '@type': 'Product', name: p.data.name, brand: p.data.brand })),
+};
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  ogType="article"
+  ogImage={entry.data.heroImage}
+  alternates={alternates}
+  translations={translations}
+  jsonLd={jsonLd}
+>
+  <section class="section">
+    <div class="container">
+      <Breadcrumbs locale={locale}
+        items={[
+          { label: t('common.home'), href: pagePath(locale) },
+          { label: t('nav.comparisons'), href: pagePath(locale, 'comparisons') },
+          { label: entry.data.title },
+        ]}
+      />
+
+      <div class="article-head">
+        <p class="kicker">{t('type.comparison')}</p>
+        <h1>{entry.data.title}</h1>
+        <p class="article-lead">{entry.data.description}</p>
+        <div class="article-meta">
+          <span>{authorRole(entry.data.author, locale)}</span>
+          <span>·</span>
+          <span>{t('common.publishedOn')} {formatDate(entry.data.pubDate, locale)}</span>
+          <span>·</span>
+          <span>{t('comparison.comparing')}: {products.length}</span>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <h2>{t('comparison.atAGlance')}</h2>
+        <p style="margin:0">{entry.data.verdict}</p>
+      </div>
+
+      <h2>{t('comparison.table')}</h2>
+      <ComparisonTable locale={locale} rows={rows} />
+      {anyAffiliate && <AffiliateDisclosure locale={locale} variant="block" />}
+
+      {
+        picks.length > 0 && (
+          <div style="margin-top:2.25rem">
+            <SectionHeading title={t('comparison.ourPicks')} />
+            <div class="grid grid-2">
+              {picks.map((pick) => (
+                <div class="card">
+                  <div class="card-body">
+                    <span class="badge badge-accent">{pick.label}</span>
+                    <h3 class="card-title">
+                      {pick.product ? (
+                        <a href={pagePath(locale, 'products', pick.product.id)}>
+                          {pick.product.data.name}
+                        </a>
+                      ) : (
+                        pick.label
+                      )}
+                    </h3>
+                    {pick.product && (
+                      <AffiliateCTA
+                        locale={locale}
+                        product={pick.product}
+                        override={override}
+                        heading={pick.label}
+                        subtitle={pick.product.data.name}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {
+        entry.data.buyingFactors.length > 0 && (
+          <div class="prose" style="margin-top:2rem">
+            <h2>{t('comparison.buyingFactors')}</h2>
+            <ul>{entry.data.buyingFactors.map((f) => <li>{f}</li>)}</ul>
+          </div>
+        )
+      }
+
+      {
+        entry.data.useCases.length > 0 && (
+          <div class="prose" style="margin-top:1rem">
+            <h2>{t('comparison.useCases')}</h2>
+            {entry.data.useCases.map((u) => (
+              <>
+                <h3>{u.title}</h3>
+                <p>{u.text}</p>
+              </>
+            ))}
+          </div>
+        )
+      }
+
+      <div class="prose" style="margin-top:1.5rem">
+        <Content />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,85 @@
+---
+import { SITE, type Locale } from '../config';
+import { assetPath } from '../i18n/utils';
+
+interface Alternate {
+  hreflang: string;
+  href: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  /** Absolute or root-relative canonical URL. Defaults to current page. */
+  canonical?: string;
+  ogType?: 'website' | 'article';
+  /** Absolute URL of a social share image (omit rather than use a placeholder). */
+  ogImage?: string;
+  noindex?: boolean;
+  alternates?: Alternate[];
+  /** JSON-LD object(s) injected as <script type="application/ld+json">. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const {
+  title,
+  description,
+  locale,
+  canonical,
+  ogType = 'website',
+  ogImage,
+  noindex = false,
+  alternates = [],
+  jsonLd,
+} = Astro.props;
+
+const site = Astro.site;
+const canonicalURL = canonical
+  ? new URL(canonical, site).href
+  : new URL(Astro.url.pathname, site).href;
+
+const fullTitle = title.includes(SITE.name) ? title : `${title} · ${SITE.name}`;
+const ogLocale = locale === 'ro' ? 'ro_RO' : 'en_US';
+const jsonLdArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<link rel="icon" type="image/svg+xml" href={assetPath('favicon.svg')} />
+<meta name="theme-color" content="#1f5c4d" />
+
+<!-- hreflang alternates -->
+{
+  alternates.map((alt) => (
+    <link rel="alternate" hreflang={alt.hreflang} href={new URL(alt.href, site).href} />
+  ))
+}
+
+<!-- Open Graph -->
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:locale" content={ogLocale} />
+{ogImage && <meta property="og:image" content={new URL(ogImage, site).href} />}
+
+<!-- Twitter -->
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={new URL(ogImage, site).href} />}
+
+{
+  jsonLdArray.map((data) => (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(data)} />
+  ))
+}

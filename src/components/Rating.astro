@@ -1,0 +1,25 @@
+---
+interface Props {
+  /** 0–5. If undefined, nothing renders (never fabricate a score). */
+  value?: number;
+  label?: string;
+}
+const { value, label } = Astro.props;
+const clamped = typeof value === 'number' ? Math.max(0, Math.min(5, value)) : undefined;
+const pct = clamped !== undefined ? (clamped / 5) * 100 : 0;
+---
+
+{
+  clamped !== undefined && (
+    <span class="rating" title={label ? `${label}: ${clamped}/5` : `${clamped}/5`}>
+      <span
+        class="rating__stars"
+        style={`--pct:${pct}%`}
+        aria-hidden="true"
+      >
+        ★★★★★
+      </span>
+      <span class="rating__num">{clamped.toFixed(1)}/5</span>
+    </span>
+  )
+}

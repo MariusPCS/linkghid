@@ -1,0 +1,20 @@
+---
+name: vonmag-article
+description: Write a project-compliant article/review/comparison that links to Vonmag (IT&C) via Profitshare, following its affiliate terms. Builds on the shared retailer-article skill.
+allowed-tools: Bash, Read, Edit, Write, WebFetch
+---
+
+# Vonmag article
+
+Follow the shared **`retailer-article`** workflow and common Profitshare rules, plus these
+Vonmag specifics.
+
+- Program: <https://profitshare.ro/affiliate-programs/it-c/vonmag> (re-verify; reviewed 2026-06-15)
+- Merchant id: `vonmag` · Category: IT&C · Niche: electronics, IT hardware & gadgets
+- Commission: **3%** · Cookie window: **verify on the program page** (not pre-recorded here)
+
+## Vonmag-specific rules
+- Don't bid on the "Vonmag" brand keyword (add it to negative keywords) or use it in domains/page names.
+- Keep prices indicative and link out to check; use official product images only, or none.
+- **Before publishing, fetch the program page above** and apply its exact terms (cookie window,
+  prohibited promotion methods, prohibited categories, brand rules).

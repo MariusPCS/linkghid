@@ -1,0 +1,68 @@
+---
+import { SITE, type Locale } from '../config';
+import { pagePath } from '../i18n/utils';
+import { useTranslations } from '../i18n/ui';
+import { mainNav } from '../data/site/navigation';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  locale: Locale;
+  translations?: Partial<Record<Locale, string>>;
+}
+
+const { locale, translations } = Astro.props;
+const t = useTranslations(locale);
+const here = Astro.url.pathname;
+const homeHref = pagePath(locale);
+
+function isActive(segment: string): boolean {
+  const target = pagePath(locale, segment);
+  return here === target || here.startsWith(target);
+}
+---
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="brand" href={homeHref} aria-label={SITE.name}>
+      <svg class="brand__mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+        <rect width="40" height="40" rx="9" fill="#1f5c4d"></rect>
+        <path
+          d="M13 11.5v17M13 28.5h9.5M24 28.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0-5.7 9.6"
+          fill="none"
+          stroke="#fff"
+          stroke-width="2.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+      </svg>
+      <span>{SITE.name}</span>
+    </a>
+
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+    <label class="menu-button" for="nav-toggle">
+      <span class="sr-only">{t('nav.menu')}</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </label>
+
+    <nav class="main-nav" aria-label={t('nav.menu')}>
+      {
+        mainNav.map((item) => (
+          <a
+            href={pagePath(locale, item.segment)}
+            aria-current={isActive(item.segment) ? 'page' : undefined}
+          >
+            {t(item.labelKey)}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="header-tools">
+      <LanguageSwitcher locale={locale} translations={translations} />
+    </div>
+  </div>
+</header>
