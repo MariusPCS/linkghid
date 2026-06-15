@@ -1,0 +1,10 @@
+{
+  "name": { "ro": "Climatizare & Răcire", "en": "Climate & Cooling" },
+  "description": {
+    "ro": "Ghiduri pentru aparate de aer condiționat, ventilatoare și soluții de răcire pentru sezonul cald.",
+    "en": "Guides for air conditioners, fans and cooling solutions for the warm season."
+  },
+  "locales": ["ro", "en"],
+  "featured": true,
+  "order": 15
+}

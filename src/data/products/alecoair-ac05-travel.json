@@ -1,0 +1,18 @@
+{
+  "name": "AlecoAir AC05 Travel",
+  "brand": "AlecoAir",
+  "category": "climatizare",
+  "merchant": "alecoair",
+  "locales": [
+    "ro",
+    "en"
+  ],
+  "summary": {
+    "ro": "Aer condiționat portabil compact de 5.000 BTU, cu timer — potrivit pentru spații mici, birouri sau rulote.",
+    "en": "Compact 5,000 BTU portable air conditioner with timer — suited to small spaces, offices or RVs."
+  },
+  "destinationUrl": "https://alecoair.ro/aer-conditionat/aparat-aer-conditionat-portabil-alecoair-ac05-travel-5000-btu-timer-potrivit-pentru-rulote",
+  "status": "active",
+  "affiliateUrl": "https://l.profitshare.ro/l/15980773",
+  "lastChecked": "2026-06-15"
+}
