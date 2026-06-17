@@ -1,0 +1,18 @@
+{
+  "name": "Hyperbuild UltimateN",
+  "brand": "Hyperbuild",
+  "category": "pc-workstation",
+  "merchant": "emag",
+  "locales": [
+    "ro",
+    "en"
+  ],
+  "summary": {
+    "ro": "Sistem desktop puternic: AMD Ryzen 7 5800X3D, 32 GB DDR5, SSD 1 TB și GeForce RTX 4070 Ti 12 GB — mai mult VRAM pentru AI și un raport bun preț/performanță.",
+    "en": "Powerful desktop: AMD Ryzen 7 5800X3D, 32 GB DDR5, 1 TB SSD and a GeForce RTX 4070 Ti 12 GB GPU — more VRAM for AI and strong value."
+  },
+  "destinationUrl": "https://www.emag.ro/sistem-desktop-pc-gaming-hyperbuild-ultimaten-cu-procesor-amd-ryzen-7-5800x3d-geforce-rtx-4070-ti-32-gb-ddr5-1t-ssd-m-2-microsoft-windows-11-pro-2010018990/pd/D693NTYBM/",
+  "status": "active",
+  "affiliateUrl": "https://l.profitshare.ro/l/16000285",
+  "lastChecked": "2026-06-17"
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Dell Precision 3240",
+  "brand": "Dell",
+  "category": "pc-workstation",
+  "merchant": "emag",
+  "locales": [
+    "ro",
+    "en"
+  ],
+  "summary": {
+    "ro": "Stație de lucru compactă, certificată: Intel Core i9-10900, 32 GB RAM, SSD 512 GB și placă NVIDIA Quadro RTX 3000 6 GB — fiabilă pentru CAD, redare și AI la nivel de bază.",
+    "en": "Compact certified workstation: Intel Core i9-10900, 32 GB RAM, 512 GB SSD and an NVIDIA Quadro RTX 3000 6 GB GPU — reliable for CAD, rendering and entry-level AI."
+  },
+  "destinationUrl": "https://www.emag.ro/sistem-desktop-pc-workstation-dell-precision-3240-cu-procesor-intelr-coretm-i9-10900-pana-la-5-20-ghz-comet-lake-32gb-ddr4-512gb-ssd-nvidia-quadro-rtx-3000-6gb-windows-10-pro-dp3240i932512w10p/pd/DR7RJ9MBM/",
+  "status": "active",
+  "affiliateUrl": "https://l.profitshare.ro/l/16000283",
+  "lastChecked": "2026-06-17"
+}

@@ -1,0 +1,10 @@
+{
+  "name": { "ro": "PC & Workstation", "en": "PCs & Workstations" },
+  "description": {
+    "ro": "Ghiduri și comparații pentru calculatoare desktop, stații de lucru și sisteme pentru creație și AI.",
+    "en": "Guides and comparisons for desktop computers, workstations and systems for creative work and AI."
+  },
+  "locales": ["ro", "en"],
+  "featured": true,
+  "order": 25
+}
